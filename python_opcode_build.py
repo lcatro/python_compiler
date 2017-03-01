@@ -104,7 +104,7 @@ def compiler_pseudo_opcode(python_pseudo_opcode_stream) :
 
     '''
     
-    const_list=[]  #  save const string or function code ..
+    const_list=[None]  #  save const string or function code ,WARNING ! value None is give to return or other using ..
     function_map_in_const_list={}  #  function code index map in const_list ..
     name_list=[]  #  save function or other name ..
     variant_name_list=[]  #  save variant name ..
@@ -168,9 +168,20 @@ def compiler_pseudo_opcode(python_pseudo_opcode_stream) :
             opcode_argument=''
             
             try :
+                if '#'==code_stream[0] :  #  noncommenting code ..
+                    continue
                 if not -1==code_stream.find(' ') :
                     opcode_instruction=code_stream[:code_stream.find(' ')].strip()
-                    opcode_argument=int(code_stream[code_stream.find(' ')+1].strip(),16)
+
+                    if 'LOAD_CONST'==opcode_instruction :  #  per-process for special instruction ..
+                        opcode_argument=code_stream[code_stream.find(' ')+1:].strip()
+
+                        if 'None'==opcode_argument :  #  LOAD_CONST None
+                            opcode_argument=0
+                        else :
+                            opcode_argument=int(opcode_argument,16)+1
+                    else :
+                        opcode_argument=int(code_stream[code_stream.find(' ')+1:].strip(),16)
                 else :
                     opcode_instruction=code_stream.strip()
             except :
@@ -178,7 +189,7 @@ def compiler_pseudo_opcode(python_pseudo_opcode_stream) :
                 
                 raise TypeError
                 
-            print opcode_instruction,opcode_argument
+            # print opcode_instruction,opcode_argument  #  debug opcode stream ..
                 
             opcode_instruction_to_byte_code=0
             
@@ -195,14 +206,18 @@ def compiler_pseudo_opcode(python_pseudo_opcode_stream) :
                 else :
                     function_code_block+=chr(opcode_instruction_to_byte_code)
             else :  #  take-argument instruction
+                opcode_instruction_to_byte_code_=chr(opcode_instruction_to_byte_code)
+                opcode_argument_hige_byte=chr((opcode_argument>>8) & 0xFF)
+                opcode_argument_low_byte=chr(opcode_argument & 0xFF)
+                
                 if 0==compile_state :
-                    global_code_block+=chr(opcode_instruction_to_byte_code)
-                    global_code_block+=chr(opcode_argument & 0xFF)
-                    global_code_block+=chr((opcode_argument>>8) & 0xFF)
+                    global_code_block+=opcode_instruction_to_byte_code_
+                    global_code_block+=opcode_argument_low_byte
+                    global_code_block+=opcode_argument_hige_byte
                 else :
-                    function_code_block+=chr(opcode_instruction_to_byte_code)
-                    function_code_block+=chr(opcode_argument&0xFF)
-                    function_code_block+=chr((opcode_argument>>8)&0xFF)
+                    function_code_block+=opcode_instruction_to_byte_code_
+                    function_code_block+=opcode_argument_low_byte
+                    function_code_block+=opcode_argument_hige_byte
         elif 1==compile_state :  #  const list ..
             const_list.append(code_stream)
         elif 2==compile_state :  #  name list ..
@@ -248,8 +263,6 @@ def save_to_pyc(file_path,code_object) :
 if __name__=='__main__' :
     if 2==len(sys.argv) :
         compile_code_object=compiler_pseudo_opcode(format_code(read_file(sys.argv[1])))
-
-        print compile_code_object
 
         save_to_pyc(sys.argv[1]+'.pyc',compile_code_object)
 
