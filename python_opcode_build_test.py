@@ -1,4 +1,8 @@
 
+config_start
+stacksize=10
+config_end
+
 const_list_start
 AAAAAAAA
 const_list_end
