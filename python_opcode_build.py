@@ -15,8 +15,8 @@ class code_object(object):
     def __init__(self) :
         self.co_argcount=0
         self.co_nlocals=0
-        self.co_stacksize=0
-        self.co_flags=0
+        self.co_stacksize=1
+        self.co_flags=0x40
         self.co_code=b''
         self.co_consts=()
         self.co_names=()
@@ -73,6 +73,12 @@ def compiler_pseudo_opcode(python_pseudo_opcode_stream) :
 
     Python pseudo-opcode file format :
     
+    config_start
+        argcount=%int%
+        locals=%int%
+        stacksize=%int%
+        flags=%int%
+    config_end
     const_list_start
         'const_name1'=const_value1
         'const_name2'=const_value2
@@ -116,21 +122,25 @@ def compiler_pseudo_opcode(python_pseudo_opcode_stream) :
     
     for code_stream_index in range(len(python_pseudo_opcode_stream)) :
         code_stream=python_pseudo_opcode_stream[code_stream_index]
-        
-        if 'const_list_start'==code_stream :
+                
+        if 'config_start'==code_stream :
             compile_state=1
+        elif 'config_end'==code_stream :
+            compile_state=0
+        elif 'const_list_start'==code_stream :
+            compile_state=2
         elif 'const_list_end'==code_stream :
             compile_state=0
         elif 'name_list_start'==code_stream :
-            compile_state=2
+            compile_state=3
         elif 'name_list_end'==code_stream :
             compile_state=0
         elif 'variant_name_list_start'==code_stream :
-            compile_state=3
+            compile_state=4
         elif 'variant_name_list_end'==code_stream :
             compile_state=0
         elif 'function_start'==code_stream :
-            compile_state=4
+            compile_state=5
             
             function_header=python_pseudo_opcode_stream[code_stream_index+1]
             function_argumunt_list=[]
@@ -163,7 +173,7 @@ def compiler_pseudo_opcode(python_pseudo_opcode_stream) :
             function_code_block=b''
             function_name=''
             compile_state=0
-        elif 0==compile_state or 4==compile_state :  #  code and function code block ..
+        elif 0==compile_state or 5==compile_state :  #  code and function code block ..
             opcode_instruction=''
             opcode_argument=''
             
@@ -218,17 +228,34 @@ def compiler_pseudo_opcode(python_pseudo_opcode_stream) :
                     function_code_block+=opcode_instruction_to_byte_code_
                     function_code_block+=opcode_argument_low_byte
                     function_code_block+=opcode_argument_hige_byte
-        elif 1==compile_state :  #  const list ..
+        elif 1==compile_state :  #  config list ..
+            try :
+                setting_name=code_stream[:code_stream.find('=')].strip()
+                setting_value=code_stream[code_stream.find('=')+1:].strip()
+                
+                if 'argcount'==setting_name :
+                    setting_value=int(setting_value,16)
+                    return_code_object.co_argcount=setting_value
+                elif 'locals'==setting_name :
+                    setting_value=int(setting_value,16)
+                    return_code_object.co_nlocals=setting_value
+                elif 'stacksize'==setting_name :
+                    setting_value=int(setting_value,16)
+                    return_code_object.co_stacksize=setting_value
+                elif 'flags'==setting_name :
+                    setting_value=int(setting_value,16)
+                    return_code_object.co_flags=setting_value
+            except :
+                print 'Resolve config block ERROR ..'
+                
+                raise TypeError
+        elif 2==compile_state :  #  const list ..
             const_list.append(code_stream)
-        elif 2==compile_state :  #  name list ..
+        elif 3==compile_state :  #  name list ..
             name_list.append(code_stream)
-        elif 3==compile_state :  #  variant name list ..
+        elif 4==compile_state :  #  variant name list ..
             variant_name_list.append(code_stream)
             
-    return_code_object.co_argcount=0
-    return_code_object.co_nlocals=0
-    return_code_object.co_stacksize=1
-    return_code_object.co_flags=0x40
     return_code_object.co_code=global_code_block
     return_code_object.co_consts=tuple(const_list,)
     return_code_object.co_names=tuple(name_list)
