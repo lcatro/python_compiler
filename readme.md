@@ -11,17 +11,17 @@ Python Compiler 使用如下的格式进行编译<br/>
 
     Instruction_Block1  #  代码块1
 
-    function_start  %function_name% (arg1,arg2,...)  #  函数名与参数声名
+    function_start  %function_name%(arg1,arg2,...)  #  函数名与参数声名
         Function_Instruction_Block1  #  函数代码
-    function_end
+    return
 
-    function_start %function_name% (arg1,arg2,...)
+    function_start %function_name%(arg1,arg2,...)
         Function_Instruction_Block2
-    function_end
+    return
         
     Instruction_Block2  #  代码块2
 
-`python_opcode_build_test.py` 是一个输出print 'AAAAAAAA' 的例子,代码如下:<br/>
+`python_opcode_build_test.py` 是调用函数输出print 'AAA' 的例子,代码如下:<br/>
 
     LOAD_CONST 'try to load function ..'
     PRINT_ITEM
