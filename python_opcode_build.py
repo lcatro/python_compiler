@@ -179,6 +179,7 @@ def compiler_pseudo_opcode(python_pseudo_opcode_stream,argument_number=0,sub_fun
                 if not -1==instruction_argument.find('\'') :
                     if 'o'==instruction_argument[0] :  #  o'\x23\xdc\a1'  ,object build ..
                         instruction_argument=conver_string_encode(instruction_argument[instruction_argument.find('\'')+1:instruction_argument.rfind('\'')])
+                        instruction_argument=marshal.loads(instruction_argument)
                     else :  #  'ABCD\x11' ,string argument ..
                         instruction_argument=conver_string_encode(instruction_argument[instruction_argument.find('\'')+1:instruction_argument.rfind('\'')])
                 elif 'None'==instruction_argument :
