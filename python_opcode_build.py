@@ -203,7 +203,7 @@ def compiler_pseudo_opcode(python_pseudo_opcode_stream,argument_number=0,sub_fun
                         const_list.append(instruction_argument)
                     
                     opcode_argument=const_list.index(instruction_argument)
-            elif 'LOAD_NAME'==instruction_name or 'LOAD_ATTR'==instruction_name or 'LOAD_GLOBAL'==instruction_name :  #  load function name into name_list ..
+            elif 'LOAD_NAME'==instruction_name or 'LOAD_ATTR'==instruction_name or 'LOAD_GLOBAL'==instruction_name or 'STORE_NAME'==instruction_name :  #  load function name into name_list ..
                 if not name_list.count(instruction_argument) :
                     name_list.append(instruction_argument)
                     
@@ -225,9 +225,11 @@ def compiler_pseudo_opcode(python_pseudo_opcode_stream,argument_number=0,sub_fun
                 else :
                     raise TypeError,'instruction CALL_FUNCTION can\' found function name '
             
+            print instruction_name,hex(opcode_instruction_to_byte_code),instruction_argument
+            
             global_code_block+=chr(opcode_instruction_to_byte_code)
             
-            if opcode_instruction_to_byte_code>opcode.HAVE_ARGUMENT :  #  take-argument instruction
+            if opcode_instruction_to_byte_code>=opcode.HAVE_ARGUMENT :  #  take-argument instruction
                 opcode_argument_hige_byte=chr((opcode_argument>>8) & 0xFF)
                 opcode_argument_low_byte=chr(opcode_argument & 0xFF)
                 
