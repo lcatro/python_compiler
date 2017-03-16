@@ -11,11 +11,11 @@ Python Compiler 使用如下的格式进行编译<br/>
 
     Instruction_Block1  #  代码块1
 
-    function_start  %function_name%(arg1,arg2,...)  #  函数名与参数声名
+    function  %function_name%(arg1,arg2,...)  #  函数名与参数声名
         Function_Instruction_Block1  #  函数代码
     return
 
-    function_start %function_name%(arg1,arg2,...)
+    function %function_name%(arg1,arg2,...)
         Function_Instruction_Block2
     return
         
