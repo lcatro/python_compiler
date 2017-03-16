@@ -21,7 +21,7 @@ class code_object(object):
         self.co_consts=()
         self.co_names=()
         self.co_varnames=()
-        self.co_filename='C:\\Users\\Administrator\\Desktop\\d\\test\\b.py'
+        self.co_filename=''
         self.co_name='<module>'
         self.co_firstlineno=1
         self.co_lnotab=b'\x00\x01'
@@ -63,12 +63,13 @@ def conver_string_encode(input_string) :
             if 'x'==input_string[flag_index+1] :  #  hex to bin
                 before_string=input_string[:flag_index]
                 conver_bit_data=b''
+                
                 try :
-                    conver_bit_data=chr(int(input_string[flag_index+1:flag_index+3],16))  #  fkldfklgj\xAAgasukh
+                    conver_bit_data=chr(int(input_string[flag_index+2:flag_index+4],16))  #  fkldfklgj\xAAgasukh
                     input_string=before_string+conver_bit_data+input_string[flag_index+4:]
                 except :
                     try :
-                        conver_bit_data=chr(int(input_string[flag_index+1:flag_index+2],16))  #  gfg\xAhfweq
+                        conver_bit_data=chr(int(input_string[flag_index+2:flag_index+3],16))  #  gfg\xAhfweq
                         input_string=before_string+input_string[flag_index+3:]
                     except :
                         input_string=before_string+input_string[flag_index+1:]
@@ -87,13 +88,13 @@ def compiler_pseudo_opcode(python_pseudo_opcode_stream,argument_number=0,sub_fun
     
     Instruction_Block1
 
-    function_start %function_name% (arg1,arg2,...)
+    function %function_name% (arg1,arg2,...)
         Function_Instruction_Block1
-    function_end
+    return
 
-    function_start %function_name% (arg1,arg2,...)
+    function %function_name% (arg1,arg2,...)
         Function_Instruction_Block2
-    function_end
+    return
         
     Instruction_Block2
 
@@ -175,8 +176,11 @@ def compiler_pseudo_opcode(python_pseudo_opcode_stream,argument_number=0,sub_fun
                 instruction_name=code_line[:code_line.find(' ')]
                 instruction_argument=code_line[code_line.find(' ')+1:].strip()
                 
-                if not -1==instruction_argument.find('\'') :  #  string instruction argument ..
-                    instruction_argument=conver_string_encode(instruction_argument[instruction_argument.find('\'')+1:instruction_argument.rfind('\'')])
+                if not -1==instruction_argument.find('\'') :
+                    if 'o'==instruction_argument[0] :  #  o'\x23\xdc\a1'  ,object build ..
+                        instruction_argument=conver_string_encode(instruction_argument[instruction_argument.find('\'')+1:instruction_argument.rfind('\'')])
+                    else :  #  'ABCD\x11' ,string argument ..
+                        instruction_argument=conver_string_encode(instruction_argument[instruction_argument.find('\'')+1:instruction_argument.rfind('\'')])
                 elif 'None'==instruction_argument :
                     instruction_argument='None'
                 else :
@@ -260,7 +264,7 @@ def serialize_code_object(code_object) :
     code_buffer+=marshal.dumps(code_object.co_filename)
     code_buffer+=marshal.dumps(code_object.co_name)
     code_buffer+=struct.pack('L',code_object.co_firstlineno)
-    code_buffer+='s'+marshal.dumps(code_object.co_lnotab)[1:]
+    code_buffer+=marshal.dumps(code_object.co_lnotab)
 
     return code_buffer
 
